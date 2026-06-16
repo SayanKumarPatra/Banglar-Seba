@@ -10,11 +10,12 @@ export const isPlaceholderFirebase = !firebaseConfig ||
   firebaseConfig.apiKey === "YOUR_API_KEY";
 
 const app = initializeApp(firebaseConfig);
-// Initialize and export the firestore database instance
-export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
 
 // Initialize real-time database using the provided databaseURL
 export const rtdb = firebaseConfig.databaseURL ? getDatabase(app) : null;
+
+// Initialize and export the firestore database instance (disable/nullify if RTDB is active to prevent GRPC/Permission denied errors on client)
+export const db = rtdb ? null : getFirestore(app, firebaseConfig.firestoreDatabaseId);
 
 export enum OperationType {
   CREATE = 'create',

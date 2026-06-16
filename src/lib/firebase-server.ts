@@ -50,11 +50,13 @@ if (!isPlaceholder && firebaseConfig) {
     if (firebaseConfig.databaseURL) {
       rtdb = getDatabase(app);
       console.log(`[Firebase Server] Realtime Database initialized: ${firebaseConfig.databaseURL}`);
+      // Since RTDB is available, we do NOT use Firestore. This avoids PERMISSION_DENIED errors on disabled Firestore API.
+      db = null;
+    } else {
+      // Also initialize Firestore as a fallback option when RTDB is not present
+      db = getFirestore(app, firebaseConfig.firestoreDatabaseId || "(default)");
+      console.log(`[Firebase Server] Initialized Firestore for Project: ${firebaseConfig.projectId}`);
     }
-    
-    // Also initialize Firestore as a parallel option or fallback
-    db = getFirestore(app, firebaseConfig.firestoreDatabaseId || "(default)");
-    console.log(`[Firebase Server] Initialized Firestore for Project: ${firebaseConfig.projectId}`);
   } catch (err) {
     console.error("[Firebase Server] Initialization error:", err);
   }
@@ -261,6 +263,28 @@ export async function getSchemes(): Promise<Scheme[]> {
           return list as Scheme[];
         }
       }
+      
+      // If we got here, snapshot doesn't exist or is empty. Seed RTDB directly!
+      console.log("[Firebase RTDB] Seeding schemes into Realtime Database...");
+      for (const item of INITIAL_SCHEMES) {
+        const payload = {
+          id: item.id,
+          title: item.title,
+          titleEn: item.titleEn || "",
+          category: item.category,
+          categoryName: item.categoryName,
+          description: item.description,
+          benefits: item.benefits || "",
+          eligibility: item.eligibility || "",
+          documents: item.documents || [],
+          officialUrl: item.officialUrl,
+          isPopular: item.isPopular || false,
+          logoUrl: item.logoUrl || "",
+          created_at: new Date().toISOString()
+        };
+        await rtdbSet(ref(rtdb, `schemes/${item.id}`), payload);
+      }
+      return INITIAL_SCHEMES;
     } catch (err) {
       console.error("[Firebase RTDB] Error in getSchemes:", err);
     }
@@ -405,6 +429,28 @@ export async function getJobs(): Promise<Job[]> {
           return list as Job[];
         }
       }
+      
+      // Seed RTDB directly
+      console.log("[Firebase RTDB] Seeding jobs into Realtime Database...");
+      for (const item of INITIAL_JOBS) {
+        const payload = {
+          id: item.id,
+          title: item.title,
+          subtitle: item.subtitle || "",
+          category: item.category,
+          categoryName: item.categoryName,
+          vacancy: item.vacancy || "",
+          qualification: item.qualification || "",
+          lastDate: item.lastDate || "",
+          officialUrl: item.officialUrl || "https://wb.gov.in",
+          salary: item.salary || "",
+          isPopular: item.isPopular || false,
+          logoUrl: item.logoUrl || "",
+          created_at: new Date().toISOString()
+        };
+        await rtdbSet(ref(rtdb, `jobs/${item.id}`), payload);
+      }
+      return INITIAL_JOBS;
     } catch (err) {
       console.error("[Firebase RTDB] Error in getJobs:", err);
     }
@@ -548,6 +594,24 @@ export async function getScholarships(): Promise<Scholarship[]> {
           return list as Scholarship[];
         }
       }
+      
+      // Seed RTDB directly
+      console.log("[Firebase RTDB] Seeding scholarships into Realtime Database...");
+      for (const item of INITIAL_SCHOLARSHIPS) {
+        const payload = {
+          id: item.id,
+          title: item.title,
+          amount: item.amount || "",
+          eligibility: item.eligibility || "",
+          lastDate: item.lastDate || "",
+          officialUrl: item.officialUrl || "https://wb.gov.in",
+          description: item.description || "",
+          logoUrl: item.logoUrl || "",
+          created_at: new Date().toISOString()
+        };
+        await rtdbSet(ref(rtdb, `scholarships/${item.id}`), payload);
+      }
+      return INITIAL_SCHOLARSHIPS;
     } catch (err) {
       console.error("[Firebase RTDB] Error in getScholarships:", err);
     }
@@ -683,6 +747,27 @@ export async function getServices(): Promise<ServiceItem[]> {
           return list as ServiceItem[];
         }
       }
+      
+      // Seed RTDB directly
+      console.log("[Firebase RTDB] Seeding services into Realtime Database...");
+      for (const item of SERVICES_DATA) {
+        const payload = {
+          id: item.id,
+          title: item.title,
+          subtitle: item.subtitle || "",
+          category: item.category,
+          categoryName: item.categoryName,
+          badge: item.badge || "",
+          btnText: item.btnText || "",
+          description: item.description || "",
+          steps: item.steps || [],
+          officialUrl: item.officialUrl || "https://wb.gov.in",
+          logoUrl: item.logoUrl || "",
+          created_at: new Date().toISOString()
+        };
+        await rtdbSet(ref(rtdb, `services/${item.id}`), payload);
+      }
+      return SERVICES_DATA;
     } catch (err) {
       console.error("[Firebase RTDB] Error in getServices:", err);
     }
@@ -824,6 +909,13 @@ export async function getCategories(): Promise<CategoryItem[]> {
           return list as CategoryItem[];
         }
       }
+      
+      // Seed RTDB directly
+      console.log("[Firebase RTDB] Seeding categories into Realtime Database...");
+      for (const cat of DEFAULT_CATEGORIES) {
+        await rtdbSet(ref(rtdb, `categories/${cat.id}`), cat);
+      }
+      return DEFAULT_CATEGORIES;
     } catch (err) {
       console.error("[Firebase RTDB] Error in getCategories:", err);
     }
