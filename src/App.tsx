@@ -536,6 +536,14 @@ export default function App() {
             }
           }, (err) => {
             console.warn("Client-side schemes RTDB listener skipped:", err);
+            // Fallback to Firestore listener
+            unsubSchemes = onSnapshot(collection(db, "schemes"), (snap) => {
+              const list: Scheme[] = [];
+              snap.forEach((doc) => list.push(doc.data() as Scheme));
+              if (list.length > 0) setSchemes(list);
+            }, (fsErr) => {
+              console.warn("Fallback client schemes Firestore skipped:", fsErr);
+            });
           });
 
           unsubJobs = onRtdbValue(rtdbRef(rtdb, "jobs"), (snapshot) => {
@@ -548,6 +556,14 @@ export default function App() {
             }
           }, (err) => {
             console.warn("Client-side jobs RTDB listener skipped:", err);
+            // Fallback to Firestore listener
+            unsubJobs = onSnapshot(collection(db, "jobs"), (snap) => {
+              const list: Job[] = [];
+              snap.forEach((doc) => list.push(doc.data() as Job));
+              if (list.length > 0) setJobs(list);
+            }, (fsErr) => {
+              console.warn("Fallback client jobs Firestore skipped:", fsErr);
+            });
           });
 
           unsubScholarships = onRtdbValue(rtdbRef(rtdb, "scholarships"), (snapshot) => {
@@ -560,6 +576,14 @@ export default function App() {
             }
           }, (err) => {
             console.warn("Client-side scholarships RTDB listener skipped:", err);
+            // Fallback to Firestore listener
+            unsubScholarships = onSnapshot(collection(db, "scholarships"), (snap) => {
+              const list: Scholarship[] = [];
+              snap.forEach((doc) => list.push(doc.data() as Scholarship));
+              if (list.length > 0) setScholarships(list);
+            }, (fsErr) => {
+              console.warn("Fallback client scholarships Firestore skipped:", fsErr);
+            });
           });
 
           unsubServices = onRtdbValue(rtdbRef(rtdb, "services"), (snapshot) => {
@@ -572,6 +596,14 @@ export default function App() {
             }
           }, (err) => {
             console.warn("Client-side services RTDB listener skipped:", err);
+            // Fallback to Firestore listener
+            unsubServices = onSnapshot(collection(db, "services"), (snap) => {
+              const list: ServiceItem[] = [];
+              snap.forEach((doc) => list.push(doc.data() as ServiceItem));
+              if (list.length > 0) setServices(list);
+            }, (fsErr) => {
+              console.warn("Fallback client services Firestore skipped:", fsErr);
+            });
           });
 
           unsubCategories = onRtdbValue(rtdbRef(rtdb, "categories"), (snapshot) => {
@@ -584,6 +616,14 @@ export default function App() {
             }
           }, (err) => {
             console.warn("Client-side categories RTDB listener skipped:", err);
+            // Fallback to Firestore listener
+            unsubCategories = onSnapshot(collection(db, "categories"), (snap) => {
+              const list: CategoryItem[] = [];
+              snap.forEach((doc) => list.push(doc.data() as CategoryItem));
+              if (list.length > 0) setCategories(list);
+            }, (fsErr) => {
+              console.warn("Fallback client categories Firestore skipped:", fsErr);
+            });
           });
         } else {
           unsubSchemes = onSnapshot(collection(db, "schemes"), (snapshot) => {

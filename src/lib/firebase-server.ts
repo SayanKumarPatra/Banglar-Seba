@@ -130,7 +130,7 @@ function loadLocalStore() {
 loadLocalStore();
 
 export async function getSystemSettings(): Promise<SystemSettings> {
-  // If we have Firestore/Realtime DB connected, fetch from database or fallback to localMemoryStore
+  // Try Realtime Database first
   if (rtdb) {
     try {
       const snapshot = await rtdbGet(ref(rtdb, "settings"));
@@ -141,7 +141,10 @@ export async function getSystemSettings(): Promise<SystemSettings> {
     } catch (err) {
       console.error("[Firebase RTDB] Error in getSystemSettings:", err);
     }
-  } else if (db) {
+  }
+  
+  // Try Firestore next
+  if (db) {
     try {
       const docRef = doc(db, "settings", "config");
       const snapshot = await getDocFromServer(docRef);
@@ -168,7 +171,9 @@ export async function saveSystemSettings(settings: SystemSettings): Promise<void
     } catch (err) {
       console.error("[Firebase RTDB] Error setting settings:", err);
     }
-  } else if (db) {
+  }
+  
+  if (db) {
     try {
       await setDoc(doc(db, "settings", "config"), settings);
     } catch (err) {
@@ -247,14 +252,15 @@ export async function getSchemes(): Promise<Scheme[]> {
   if (rtdb) {
     try {
       const snapshot = await rtdbGet(ref(rtdb, "schemes"));
-      if (!snapshot.exists()) {
-        return [];
+      if (snapshot.exists()) {
+        const val = snapshot.val();
+        const list = Array.isArray(val) 
+          ? val.filter(Boolean) 
+          : Object.keys(val).map(key => val[key]);
+        if (list.length > 0) {
+          return list as Scheme[];
+        }
       }
-      const val = snapshot.val();
-      const list = Array.isArray(val) 
-        ? val.filter(Boolean) 
-        : Object.keys(val).map(key => val[key]);
-      return list as Scheme[];
     } catch (err) {
       console.error("[Firebase RTDB] Error in getSchemes:", err);
     }
@@ -285,6 +291,15 @@ export async function getSchemes(): Promise<Scheme[]> {
             created_at: new Date().toISOString()
           };
           await setDoc(doc(db, "schemes", item.id), payload);
+          
+          // Seed RTDB in parallel if alive
+          if (rtdb) {
+            try {
+              await rtdbSet(ref(rtdb, `schemes/${item.id}`), payload);
+            } catch (rtdbErr) {
+              console.warn("[Firebase RTDB] Post-seed error: ", rtdbErr);
+            }
+          }
         }
         return INITIAL_SCHEMES;
       }
@@ -336,7 +351,9 @@ export async function upsertScheme(scheme: Scheme): Promise<void> {
     } catch (err) {
       console.error("[Firebase RTDB] Error upserting scheme:", err);
     }
-  } else if (db) {
+  }
+  
+  if (db) {
     try {
       await setDoc(doc(db, "schemes", scheme.id), payload);
     } catch (err) {
@@ -356,7 +373,9 @@ export async function removeScheme(id: string): Promise<void> {
     } catch (err) {
       console.error(`[Firebase RTDB] Error deleting scheme ${id}:`, err);
     }
-  } else if (db) {
+  }
+  
+  if (db) {
     try {
       await deleteDoc(doc(db, "schemes", id));
     } catch (err) {
@@ -377,14 +396,15 @@ export async function getJobs(): Promise<Job[]> {
   if (rtdb) {
     try {
       const snapshot = await rtdbGet(ref(rtdb, "jobs"));
-      if (!snapshot.exists()) {
-        return [];
+      if (snapshot.exists()) {
+        const val = snapshot.val();
+        const list = Array.isArray(val) 
+          ? val.filter(Boolean) 
+          : Object.keys(val).map(key => val[key]);
+        if (list.length > 0) {
+          return list as Job[];
+        }
       }
-      const val = snapshot.val();
-      const list = Array.isArray(val) 
-        ? val.filter(Boolean) 
-        : Object.keys(val).map(key => val[key]);
-      return list as Job[];
     } catch (err) {
       console.error("[Firebase RTDB] Error in getJobs:", err);
     }
@@ -415,6 +435,15 @@ export async function getJobs(): Promise<Job[]> {
             created_at: new Date().toISOString()
           };
           await setDoc(doc(db, "jobs", item.id), payload);
+          
+          // Seed RTDB in parallel if alive
+          if (rtdb) {
+            try {
+              await rtdbSet(ref(rtdb, `jobs/${item.id}`), payload);
+            } catch (rtdbErr) {
+              console.warn("[Firebase RTDB] Post-seed error: ", rtdbErr);
+            }
+          }
         }
         return INITIAL_JOBS;
       }
@@ -465,7 +494,9 @@ export async function upsertJob(job: Job): Promise<void> {
     } catch (err) {
       console.error("[Firebase RTDB] Error upserting job:", err);
     }
-  } else if (db) {
+  }
+  
+  if (db) {
     try {
       await setDoc(doc(db, "jobs", job.id), payload);
     } catch (err) {
@@ -485,7 +516,9 @@ export async function removeJob(id: string): Promise<void> {
     } catch (err) {
       console.error(`[Firebase RTDB] Error deleting job ${id}:`, err);
     }
-  } else if (db) {
+  }
+  
+  if (db) {
     try {
       await deleteDoc(doc(db, "jobs", id));
     } catch (err) {
@@ -506,14 +539,15 @@ export async function getScholarships(): Promise<Scholarship[]> {
   if (rtdb) {
     try {
       const snapshot = await rtdbGet(ref(rtdb, "scholarships"));
-      if (!snapshot.exists()) {
-        return [];
+      if (snapshot.exists()) {
+        const val = snapshot.val();
+        const list = Array.isArray(val) 
+          ? val.filter(Boolean) 
+          : Object.keys(val).map(key => val[key]);
+        if (list.length > 0) {
+          return list as Scholarship[];
+        }
       }
-      const val = snapshot.val();
-      const list = Array.isArray(val) 
-        ? val.filter(Boolean) 
-        : Object.keys(val).map(key => val[key]);
-      return list as Scholarship[];
     } catch (err) {
       console.error("[Firebase RTDB] Error in getScholarships:", err);
     }
@@ -540,6 +574,15 @@ export async function getScholarships(): Promise<Scholarship[]> {
             created_at: new Date().toISOString()
           };
           await setDoc(doc(db, "scholarships", item.id), payload);
+          
+          // Seed RTDB in parallel if alive
+          if (rtdb) {
+            try {
+              await rtdbSet(ref(rtdb, `scholarships/${item.id}`), payload);
+            } catch (rtdbErr) {
+              console.warn("[Firebase RTDB] Post-seed error: ", rtdbErr);
+            }
+          }
         }
         return INITIAL_SCHOLARSHIPS;
       }
@@ -586,7 +629,9 @@ export async function upsertScholarship(scholarship: Scholarship): Promise<void>
     } catch (err) {
       console.error("[Firebase RTDB] Error upserting scholarship:", err);
     }
-  } else if (db) {
+  }
+  
+  if (db) {
     try {
       await setDoc(doc(db, "scholarships", scholarship.id), payload);
     } catch (err) {
@@ -606,7 +651,9 @@ export async function removeScholarship(id: string): Promise<void> {
     } catch (err) {
       console.error(`[Firebase RTDB] Error deleting scholarship ${id}:`, err);
     }
-  } else if (db) {
+  }
+  
+  if (db) {
     try {
       await deleteDoc(doc(db, "scholarships", id));
     } catch (err) {
@@ -627,14 +674,15 @@ export async function getServices(): Promise<ServiceItem[]> {
   if (rtdb) {
     try {
       const snapshot = await rtdbGet(ref(rtdb, "services"));
-      if (!snapshot.exists()) {
-        return [];
+      if (snapshot.exists()) {
+        const val = snapshot.val();
+        const list = Array.isArray(val) 
+          ? val.filter(Boolean) 
+          : Object.keys(val).map(key => val[key]);
+        if (list.length > 0) {
+          return list as ServiceItem[];
+        }
       }
-      const val = snapshot.val();
-      const list = Array.isArray(val) 
-        ? val.filter(Boolean) 
-        : Object.keys(val).map(key => val[key]);
-      return list as ServiceItem[];
     } catch (err) {
       console.error("[Firebase RTDB] Error in getServices:", err);
     }
@@ -664,6 +712,15 @@ export async function getServices(): Promise<ServiceItem[]> {
             created_at: new Date().toISOString()
           };
           await setDoc(doc(db, "services", item.id), payload);
+          
+          // Seed RTDB in parallel if alive
+          if (rtdb) {
+            try {
+              await rtdbSet(ref(rtdb, `services/${item.id}`), payload);
+            } catch (rtdbErr) {
+              console.warn("[Firebase RTDB] Post-seed error: ", rtdbErr);
+            }
+          }
         }
         return SERVICES_DATA;
       }
@@ -713,7 +770,9 @@ export async function upsertService(service: ServiceItem): Promise<void> {
     } catch (err) {
       console.error("[Firebase RTDB] Error upserting service:", err);
     }
-  } else if (db) {
+  }
+  
+  if (db) {
     try {
       await setDoc(doc(db, "services", service.id), payload);
     } catch (err) {
@@ -733,7 +792,9 @@ export async function removeService(id: string): Promise<void> {
     } catch (err) {
       console.error(`[Firebase RTDB] Error deleting service ${id}:`, err);
     }
-  } else if (db) {
+  }
+  
+  if (db) {
     try {
       await deleteDoc(doc(db, "services", id));
     } catch (err) {
@@ -754,18 +815,15 @@ export async function getCategories(): Promise<CategoryItem[]> {
   if (rtdb) {
     try {
       const snapshot = await rtdbGet(ref(rtdb, "categories"));
-      if (!snapshot.exists()) {
-        // Seed first
-        for (const cat of DEFAULT_CATEGORIES) {
-          await rtdbSet(ref(rtdb, `categories/${cat.id}`), cat);
+      if (snapshot.exists()) {
+        const val = snapshot.val();
+        const list = Array.isArray(val) 
+          ? val.filter(Boolean) 
+          : Object.keys(val).map(key => val[key]);
+        if (list.length > 0) {
+          return list as CategoryItem[];
         }
-        return DEFAULT_CATEGORIES;
       }
-      const val = snapshot.val();
-      const list = Array.isArray(val) 
-        ? val.filter(Boolean) 
-        : Object.keys(val).map(key => val[key]);
-      return list as CategoryItem[];
     } catch (err) {
       console.error("[Firebase RTDB] Error in getCategories:", err);
     }
@@ -781,6 +839,15 @@ export async function getCategories(): Promise<CategoryItem[]> {
         // Seed first
         for (const cat of DEFAULT_CATEGORIES) {
           await setDoc(doc(db, "categories", cat.id), cat);
+          
+          // Seed RTDB in parallel if alive
+          if (rtdb) {
+            try {
+              await rtdbSet(ref(rtdb, `categories/${cat.id}`), cat);
+            } catch (rtdbErr) {
+              console.warn("[Firebase RTDB] Post-seed error: ", rtdbErr);
+            }
+          }
         }
         return DEFAULT_CATEGORIES;
       }
@@ -822,7 +889,9 @@ export async function upsertCategory(cat: CategoryItem): Promise<void> {
     } catch (err) {
       console.error("[Firebase RTDB] Error upserting category:", err);
     }
-  } else if (db) {
+  }
+  
+  if (db) {
     try {
       await setDoc(doc(db, "categories", cat.id), payload);
     } catch (err) {
@@ -842,7 +911,9 @@ export async function removeCategory(id: string): Promise<void> {
     } catch (err) {
       console.error(`[Firebase RTDB] Error deleting category ${id}:`, err);
     }
-  } else if (db) {
+  }
+  
+  if (db) {
     try {
       await deleteDoc(doc(db, "categories", id));
     } catch (err) {
